@@ -1,5 +1,8 @@
 
 ========= version history of XML::eXistDB
 
-version 0.09:
+version 0.10: Thu Jan 14 13:00:13 CET 2010
+	- documentation fixes
+
+version 0.09: 2010-01-13 23:36
 	- initial

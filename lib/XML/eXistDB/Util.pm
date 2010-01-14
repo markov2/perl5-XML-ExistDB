@@ -11,11 +11,17 @@ XML::eXistDB::Util - Constants and other general functions
   use XML::eXistDB::Util;
 
 =chapter DESCRIPTION
+Simple helper routines and constant for the end-user, modelled after
+M<XML::Compile::Util>.
 
 =chapter FUNCTIONS
 
+None yet.
+
+=chapter CONSTANTS
+
 =section namespaces
-C<NS_COLLECTION_XCONF>, C<NS_EXISTDB>
+Defined are: C<NS_COLLECTION_XCONF>, C<NS_EXISTDB>.
 
 =cut
 

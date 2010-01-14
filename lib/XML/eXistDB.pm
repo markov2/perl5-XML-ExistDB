@@ -28,10 +28,9 @@ Website: F<http://exist-db.org>
 
 The C<XML::eXistDB> distribution contains the following modules:
 =over 4
-=item C<XML::eXistDB> focuses on processing eXist (configuration) files
-=item C<XML::eXistDB::Util> contains convenience functions and constants
-=item C<XML::eXistDB::RPC> implements the large XML-RPC API to speak to
-  an eXist daemon
+=item . C<XML::eXistDB> focuses on processing eXist (configuration) files
+=item . C<XML::eXistDB::Util> contains convenience functions and constants
+=item . C<XML::eXistDB::RPC> implements the large XML-RPC API to speak to an eXist daemon
 =back
 
 The "REST" API for eXist is very different from the XML-RPC API, so there

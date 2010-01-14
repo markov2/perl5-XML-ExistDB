@@ -13,7 +13,7 @@ use XML::eXistDB;
 
 use Digest::MD5  qw/md5_base64 md5_hex/;
 use Encode       qw/encode/;
-use MIME::Base64 qw/encode_base64 decode_base64/;
+use MIME::Base64 qw/encode_base64/;
 
 # to be removed later
 use Data::Dumper;
@@ -26,13 +26,18 @@ XML::eXistDB::RPC - access eXist databases via RPC
 
 =chapter SYNOPSYS
   my $db = XML::eXistDB::RPC->new(destination => $uri);
+  my ($rc1, $h) = $db->describeUser('guest');
+  $rc1==0 or die "Error: $h\n";
+
+  my ($rc2, $set) = $db->executeQuery($query);
+  my ($rc3, @answers) = $db->retrieveResults($set);
 
 =chapter DESCRIPTION
 
-Implementation of the full XML-RPC interface to the ExistDB. This is not
-just an one-on-one implementation: some methods are smarter and many
-methods are renamed to correct historical mistakes. Hopefully, the
-result is more readible.
+This module is a full implementation of the fXML-RPC interface to the
+eXist Database. This is not just an one-on-one implementation: some
+methods are smarter and many methods are renamed to correct historical
+mistakes. Hopefully, the result is more readible.
 
 B<warning:> some methods are tested lightly, but a lot is B<not tested>
 in real-life. I have a long list of bugs for eXist 1.4, and hope that
@@ -64,12 +69,12 @@ and binaries are accepted, we speak about a I<Resource>.
 The XML-RPC method names are a mess: an typical example of many years
 of growth. To repair that, consistent naming convensions are introduced.
 
-Any C<describeXXX> collects a HASH with details about XXX. Any C<listXXX>
-collects a list of XXX names.  The typical Java C<get> prefixes on
-some methods were removed in favor of better named alternatives:
-sometimes C<list>, sometimes C<describe>, often something completely
-different. Class attribute getters and setters naming should not be used
-in interfaces (and are very not-Perl).
+Any method C<describeXXX()> collects a HASH with details about C<XXX>.
+And any C<listXXX()> collects a list of C<XXX> names.  The typical Java
+C<get> prefixes on some methods were removed in favor of better named
+alternatives: sometimes C<list>, sometimes C<describe>, often something
+completely different. Class attribute getters and setters naming should
+not be used in interfaces (and are very not-Perl).
 
 Most methods already had the form "<action><class>" (like "removeCollection"),
 but on some random spots, the "class" was not present in the name.  This
@@ -1012,12 +1017,17 @@ sub execute($@)
 }
 
 #-----------------
-=subsection Query returns resultset
+=subsection Query returns result as set
 
 =method executeQuery QUERY, [ENCODING], [FORMAT]
+Run the QUERY given in the specified ENCODING.  Returned is
+only an identifier to the result.
+
 =example
-   my $resultid = $db->executeQuery($query);
-   $db->releaseResults($resultid);
+   my ($rc1, $set)   = $db->executeQuery($query);
+   my ($rc2, $count) = $db->numberOfResults($set);
+   my ($rc3, @data)  = $db->retrieveResults($set);
+   $db->releaseResults($set);
 =cut
 
 sub executeQuery($@)
@@ -1104,11 +1114,13 @@ sub retrieveResults($@)
 }
 
 #-----------------
-=subsection Single return query
+=subsection Query returns result
 
 =method query QUERY, LIMIT, [FIRST], [FORMAT]
-[deprecated according to the java description] Returns a document of the
-collected results.
+Returns a document of the collected results.
+
+This method is deprecated according to the java description, in favor of
+M<executeQuery()>, however often used for its simplicity.
 =cut
 
 #T
@@ -1283,7 +1295,6 @@ sub trace() { shift->{rpc}->trace }
 Some standard API methods have gotten more powerful alternatives.  Please
 avoid using the methods described in this section (although they do work)
 
-#-----------------
 =subsection Please avoid: collections
 
 =method getCollectionDesc [COLLECTION]
@@ -1539,7 +1550,7 @@ sub retrieve($$@)
 
     my ($rc, $bytes) = $self->{rpc}->retrieve(@args, $self->_format(@_));
     $rc==0 or return ($rc, $bytes);
-    (0, $self->schemas->decodeXML(decode_base64 $bytes));
+    (0, $self->schemas->decodeXML($bytes));
 }
 
 =method retrieveAll RESULTSET, [FORMAT]
@@ -1551,7 +1562,7 @@ sub retrieveAll($$@)
     my ($rc, $bytes) = $self->{rpc}->retrieveAll(int => $set
       , $self->_format(@_));
     $rc==0 or return ($rc, $bytes);
-    (0, $self->schemas->decodeXML(decode_base64 $bytes));
+    (0, $self->schemas->decodeXML($bytes));
 }
 
 =method retrieveAllFirstChunk RESULTSET, [FORMAT]
@@ -1605,9 +1616,8 @@ sub getDocumentChunked($@)
 
 sub getDocumentNextChunk($$$)
 {   my ($self, $handle, $start, $len) = @_;
-    my ($rc, $data) = $self->{rpc}->getDocumentChunck(string => $handle
-       , int => $start, int => $len);
-    ($rc, $rc==0 ? $data : decode_base64 $data);
+    $self->{rpc}->getDocumentChunck(string => $handle
+      , int => $start, int => $len);
 }
 
 =method retrieveAsString DOCUMENT, NODEID, OPTIONS
@@ -1622,8 +1632,10 @@ sub retrieveAsString($$@)
 #----------------
 =section Renamed methods
 Quite a number of API methods have been renamed to be more consistent
-with other names.  Using the new names should improve readibility.
+with other names.  Using the new names should improve readibility. The
+original names are still available:
 
+  -- xml-rpc name              -- replacement name
   createResourceId          => uniqueResourceName
   dataBackup                => initiateBackup
   getBinaryResource         => downloadBinary
