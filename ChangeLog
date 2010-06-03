@@ -1,6 +1,12 @@
 
 ========= version history of XML::eXistDB
 
+version 0.11: Thu Jun  3 11:42:33 CEST 2010
+	- fix autodect of filename in document upload.
+	  rt.cpan.org#56945 [Grégoire Montcheuil]
+	- repair trace() syntax problem caused by Log::Report code
+	  change.
+
 version 0.10: Thu Jan 14 13:00:13 CET 2010
 	- documentation fixes
 

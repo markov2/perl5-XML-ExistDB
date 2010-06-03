@@ -4,12 +4,12 @@ use 5.008;
 
 WriteMakefile
  ( NAME	 	=> 'XML::ExistDB'
- , VERSION	=> '0.10'
+ , VERSION	=> '0.11'
  , PREREQ_PM    =>
    { XML::Compile              => 1.08
    , XML::Compile::Cache       => 0.93
    , XML::Compile::RPC         => 0.13
-   , Log::Report               => 0.25
+   , Log::Report               => 0.26
    , Time::HiRes               => 0
    , LWP::UserAgent            => 0
    , MIME::Base64              => 0

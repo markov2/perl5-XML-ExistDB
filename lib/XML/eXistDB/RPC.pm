@@ -3,7 +3,7 @@ use strict;
 
 package XML::eXistDB::RPC;
 
-use Log::Report 'xml-existdb';
+use Log::Report 'xml-existdb', syntax => 'LONG';
 
 use XML::Compile::RPC::Util;
 use XML::Compile::RPC::Client ();
@@ -240,7 +240,7 @@ sub _document($)
         if ref $_[0] eq 'SCALAR';
     return encode 'utf-8', $_[0]
         if $_[0] =~ m/^\s*\</;
-    if($_[0] =~ m/[\r\n]/ && -f $_[0])
+    if($_[0] !~ m/[\r\n]/ && -f $_[0])
     {   local *DOC;
         open DOC, '<:raw', $_[0]
             or report FAULT => "cannot read document from file $_[0]";

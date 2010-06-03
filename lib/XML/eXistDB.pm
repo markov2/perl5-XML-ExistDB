@@ -13,7 +13,7 @@ use XML::LibXML::Simple qw/XMLin/;
 my $coll_type = pack_type NS_COLLECTION_XCONF, 'collection';
 
 =chapter NAME
-XML::eXistDB - handle the eXist pure XML database
+ XML::eXistDB - handle the eXist pure XML database
 
 =chapter SYNOPSIS
  # You want to talk to eXist via a protocol. Read that manpage
