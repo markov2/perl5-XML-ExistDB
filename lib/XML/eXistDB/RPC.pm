@@ -611,9 +611,9 @@ sub listDocumentPermissions($)
 =method describeUser USERNAME
 [non-API] returns a HASH with user information.
 =example
-  my ($rc, $user) = $db->describeUser('guest');
-  $rc==0 or die "error: $user ($rc)";
-  my @groups = @{$user->{groups}};
+  my ($rc, $info) = $db->describeUser($username);
+  $rc==0 or die "error: $info ($rc)";
+  my @groups = @{$info->{groups}};
 =cut
 
 #T
@@ -929,19 +929,16 @@ sub uploadDocument($$@)
     my $compr  = exists $args{compress} ? $args{compress} : $args{compr_upload};
     for ($chunks, $compr) { $_ *= 1024 if defined $_ } 
 
-    my @dates  = _date_options $args{creation_date}, $args{modify_date};
-    my $replace= $args{replace};
-    my $mime   = $args{mime_type} || 'text/xml';
-
-    my $to_sent = length $doc;
-    return $self->parse($doc, $resource, $replace, @dates)  # simple file
-        if $to_sent < $chunks;
+    my @dates   = _date_options $args{creation_date}, $args{modify_date};
+    my $replace = $args{replace};
+    my $mime    = $args{mime_type} || 'text/xml';
 
     # Send file in chunks
-    my $sent = 0;
+    my $to_sent = length $doc;
+    my $sent    = 0;
     my $tmp;
 
-    while($sent + $chunks <= $to_sent)
+    while($sent < $to_sent)
     {   (my $rc, $tmp) = $self->upload($tmp, substr($doc, $sent, $chunks));
         $rc==0 or return ($rc, $tmp);
         $sent += $chunks;
@@ -1474,17 +1471,23 @@ explicitly state C<undef> at that first call.  When all data is uploaded,
 call M<parseLocal()> or M<parseLocalExt()>.
 
 =example
+   # start uploading
    my ($rc1, $tmp)  = $db->upload(undef, substr($data, 0, 999));
+   my ($rc1, $tmp)  = $db->upload(substr($data, 0, 999));  # same
+
+   # send more chunks
    my ($rc2, undef) = $db->upload($tmp,  substr($data, 1000));
+
+   # insert the document in the database
    my ($rc3, $ok)   = $db->parseLocal($tmp, '/db/file.xml', 0, 'text/xml')
       if $rc1==0 && $rc2==0;
 =cut
 
 sub upload($;$)
 {   my $self = shift;
-    my $tmp  = @_ == 3 ? shift : undef;
-    $self->{rpc}->upload((defined $tmp ? (string => $tmp) : ())
-       , string => $_[3], int => length($_[3]));
+    my $tmp  = @_ == 2 ? shift : undef;
+    $self->{rpc}->upload(string => (defined $tmp ? $tmp : '')
+       , base64 => $_[0], int => length($_[0]));
 }
 
 =method uploadCompressed [TEMPNAME], CHUNK
