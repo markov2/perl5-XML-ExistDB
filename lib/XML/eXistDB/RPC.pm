@@ -105,7 +105,7 @@ the error message.  For instance,
 
 =section Constructors
 
-=c_method new OPTIONS
+=c_method new %options
 
 You must either specify your own L<XML::Compile::RPC::Client> object
 with the C<rpc> option, or a C<destination> which will be used to create
@@ -257,8 +257,8 @@ sub _document($)
 #-----------------
 =section Repository
 
-=method hasCollection COLLECTION
-Does the COLLECTION identified by name exist in the repository?
+=method hasCollection $collection
+Does the $collection identified by name exist in the repository?
 =example
   my ($rc, $exists) = $db->hasCollection($name);
   $rc and die "$exists (RC=$rc)";
@@ -268,7 +268,7 @@ Does the COLLECTION identified by name exist in the repository?
 #T
 sub hasCollection($) { $_[0]->{rpc}->hasCollection(string => $_[1]) }
 
-=method hasDocument DOCNAME
+=method hasDocument $docname
 Returns whether a document with NAME exists in the repository.
 =example
   my ($rc, $exists) = $db->hasDocument($name);
@@ -288,9 +288,9 @@ by OASIS is enabled on the database.
 #T
 sub isXACMLEnabled() {shift->{rpc}->isXACMLEnabled}
 
-=method backup USER, PASSWORD, TOCOLL, FROMCOLL
-Returns success. Create a backup of the FROMCOLL into the TOCOLL, using
-USERname and PASSWORD to write it.  There is also an Xquery function to
+=method backup $user, $password, $tocoll, $fromcoll
+Returns success. Create a backup of the $fromcoll into the $tocoll, using
+$user and $password to write it.  There is also an Xquery function to
 produce backups.
 =example
   my ($rc, $ok) = $db->backup('sys', 'xxx', '/db/orders', '/db/backup');
@@ -302,8 +302,8 @@ sub backup($$$$)
       , string => $_[3], string => $_[4]);
 }
 
-=method shutdown [DELAY]
-Shutdown the database.  The DELAY is in milliseconds.
+=method shutdown [$delay]
+Shutdown the database.  The $delay is in milliseconds.
 =example
   my ($rc, $success) = $db->shutdown(3000);  # 3 secs
   $rc==0 or die "$rc $success";
@@ -325,7 +325,7 @@ sub sync() { shift->{rpc}->sync }
 #-----------------
 =section Collections
 
-=method createCollection COLLECTION, [DATE]
+=method createCollection $collection, [$date]
 Is a success if the collection already exists or can be created.
 =example createCollection
   my $subcoll = "$supercoll/$myname";
@@ -340,15 +340,15 @@ sub createCollection($;$)
     $self->{rpc}->createCollection(string => $coll, @date);
 }
 
-=method	configureCollection COLLECTION, CONFIGURATION, OPTIONS
-The CONFIGURATION is a whole C<.xconfig>, describing the collection.
+=method configureCollection $collection, $configuration, %options
+The $configuration is a whole C<.xconfig>, describing the collection.
 This can be a M<XML::LibXML::Document> node, a stringified XML
 document, or a HASH.
 
-When the CONFIGURATION is a HASH, the data will get formatted
+When the $configuration is a HASH, the data will get formatted
 by M<XML::eXistDB::createCollectionConfig()>.
 
-The configuration will be placed in C</db/system/config$COLLECTION>,
+The configuration will be placed in C</db/system/config/$collection>,
 inside the database.
 
 =option  beautify BOOLEAN
@@ -393,9 +393,9 @@ sub configureCollection($$%)
     $self->{rpc}->configureCollection(string => $coll, string => $config);
 }
 
-=method copyCollection FROM, TO | (TOCOLL, SUBCOLL)
-Copy the FROM collection to a new TO. With three arguments, SUBCOLL
-is a collection within TOCOLL.
+=method copyCollection $from, $to | <$tocoll, $subcoll>
+Copy the $from collection to a new $to. With three arguments, $subcoll
+is a collection within $tocoll.
 =examples
   my ($rc, $succ) = $db->copyCollection('/db/from', '/db/some/to');
   my ($rc, $succ) = $db->copyCollection('/db/from', '/db/some', 'to');
@@ -408,9 +408,9 @@ sub copyCollection($$;$)
     $self->{rpc}->copyCollection(@param);
 }
 
-=method moveCollection FROM, TO | (TOCOLL, SUBCOLL)
-Copy the FROM collection to a new TO. With three arguments, SUBCOLL
-is a collection within TOCOLL.
+=method moveCollection $from, $to | <$tocoll, $subcoll>
+Copy the $from collection to a new $to. With three arguments, $subcoll
+is a collection within $tocoll.
 =examples
   my ($rc, $succ) = $db->moveCollection('/db/from', '/db/some/to');
   my ($rc, $succ) = $db->moveCollection('/db/from', '/db/some', 'to');
@@ -427,7 +427,7 @@ sub moveCollection($$;$)
       , string => $subcoll);
 }
 
-=method describeCollection [COLLECTION], OPTIONS
+=method describeCollection [$collection], %options
 Returns the RC and a HASH with details.  The details are the same as
 returned with M<getCollectionDesc()>, excluding details about
 documents.
@@ -464,7 +464,7 @@ sub describeCollection(;$%)
     (0, $h);
 }
 
-=method subCollections [COLLECTION]
+=method subCollections [$collection]
 [non-API] Returns a list of sub-collections for this collection, based
 on the results of M<describeCollection()>. The returned names are made
 absolute.
@@ -483,8 +483,8 @@ sub subCollections(;$)
     (0, map { "$data->{name}/$_" } @{$data->{collections} || []});
 }
 
-=method collectionCreationDate [COLLECTION]
-[non-API] Returns the date of the creation of the COLLECTION, by default
+=method collectionCreationDate [$collection]
+[non-API] Returns the date of the creation of the $collection, by default
 from the root.
 =example
   my ($rc, $date) = $db->collectionCreationDate($coll);
@@ -499,9 +499,9 @@ sub collectionCreationDate(;$)
     $self->{rpc}->getCreationDate(string => $coll);
 }
 
-=method listResources [COLLECTION]
-[non-API] Returns ... with all documents in the COLLECTION. Without
-COLLECTION, it will list all documents in the whole repository.
+=method listResources [$collection]
+[non-API] Returns ... with all documents in the $collection. Without
+$collection, it will list all documents in the whole repository.
 =example
   my ($rc, @elems) = $db->listResources;
   $rc==0 or die "error: $elems[0] ($rc)";
@@ -517,7 +517,7 @@ sub listResources(;$)
     ($rc, rpcarray_values $details);
 }
 
-=method reindexCollection COLLECTION
+=method reindexCollection $collection
 Reindex all documents in a certain collection.
 =example
    my ($rc, $success) = $db->reindexCollection($name);
@@ -531,7 +531,7 @@ sub reindexCollection($)
     $self->{rpc}->reindexCollection(string => $coll);
 }
 
-=method removeCollection COLLECTION
+=method removeCollection $collection
 Remove an entire collection from the database.
 =example
    my ($rc, $success) = $db->removeCollection($name);
@@ -548,9 +548,9 @@ sub removeCollection($)
 #-----------------
 =section Permissions
 
-=method login USERNAME, [PASSWORD]
-[non-API] Change the USERNAME (as known by ExistDB). When you specify
-a non-existing USERNAME or a wrong PASSWORD, you will not get more data
+=method login $username, [$password]
+[non-API] Change the $username (as known by ExistDB). When you specify
+a non-existing $username or a wrong $password, you will not get more data
 from this connection.  The next request will tell.
 =cut
 
@@ -579,8 +579,8 @@ sub listGroups()
     (0, rpcarray_values $details);
 }
 
-=method describeResourcePermissions RESOURCE
-[non-API] returns HASH with permission details about a RESOURCE>
+=method describeResourcePermissions $resource
+[non-API] returns HASH with permission details about a $resource>
 =cut
 
 #T
@@ -590,8 +590,8 @@ sub describeResourcePermissions($)
     ($rc, struct_to_hash $details);
 }
 
-=method listDocumentPermissions [COLLECTION]
-List the permissions for all resources in the COLLECTION
+=method listDocumentPermissions [$collection]
+List the permissions for all resources in the $collection
 =cut
 
 #T
@@ -608,7 +608,7 @@ sub listDocumentPermissions($)
     (0, \%h);
 }
 
-=method describeUser USERNAME
+=method describeUser $username
 [non-API] returns a HASH with user information.
 =example
   my ($rc, $info) = $db->describeUser($username);
@@ -646,17 +646,17 @@ sub listUsers()
     (0, \%h);
 }
 
-=method removeUser USERNAME
+=method removeUser $username
 Returns true on success.
 =cut
 
 #T
 sub removeUser($) { $_[0]->{rpc}->removeUser(string => $_[1]) }
 
-=method setPermissions TARGET, PERMISSIONS, [USER, GROUP]
-The TARGET which is addressed is either a resource or a collection.
+=method setPermissions $target, $permissions, [$user, $group]
+The $target which is addressed is either a resource or a collection.
 
-The PERMISSIONS are specified either as an integer value or using a
+The $permissions are specified either as an integer value or using a
 modification string. The bit encoding of the integer value corresponds
 to Unix conventions (with 'x' is replaced by 'update'). The modification
 string has as syntax:
@@ -672,9 +672,9 @@ sub setPermissions($$;$$)
        , ($perms =~ m/\D/ ? 'string' : 'int') => $perms);
 }
 
-=method setUser USER, PASSWORD, GROUPS, [HOME]
+=method setUser $user, $password, $groups, [$home]
 Modifies or creates a repository user.
-The PASSWORD is plain-text password. GROUPS are specified as single
+The $password is plain-text password. $groups are specified as single
 scalar or and ARRAY. The first group is the user's primary group.
 =cut
 
@@ -691,8 +691,8 @@ sub setUser($$$;$)
        );
 }
 
-=method describeCollectionPermissions [COLLECTION]
-Returns the RC and a HASH which shows the permissions on the COLLECTION.
+=method describeCollectionPermissions [$collection]
+Returns the RC and a HASH which shows the permissions on the $collection.
 The output of the API is regorously rewritten to simplify implementation.
 
 The HASH contains absolute collection names as keys, and then as values
@@ -718,7 +718,7 @@ sub describeCollectionPermissions(;$)
 #-----------------
 =section Resources
 
-=method copyResource FROM, TOCOLL, TONAME
+=method copyResource $from, $tocoll, $toname
 =example
   my ($rc, $success) = $db->copyResource(...);
 =cut
@@ -729,9 +729,9 @@ sub copyResource($$$)
     $self->{rpc}->copyResource(string=> $_[0], string=> $_[1], string=> $_[2]);
 }
 
-=method uniqueResourceName [COLLECTION]
+=method uniqueResourceName [$collection]
 Produces a random (and hopefully unique) resource-id (string) within
-the COLLECTION.  The returned id looks something like C<fe7c6ea4.xml>.
+the $collection.  The returned id looks something like C<fe7c6ea4.xml>.
 =example
   my ($rc, $id) = $db->uniqueResourceName($coll);
 =cut
@@ -743,8 +743,8 @@ sub uniqueResourceName(;$)
     $self->{rpc}->createResourceId(string => $coll);
 }
 
-=method describeResource RESOURCE
-Returns details about a RESOURCE (which is a document or a binary).
+=method describeResource $resource
+Returns details about a $resource (which is a document or a binary).
 =example
   my ($rc, $details) = $db->describeResource($resource);
 =cut
@@ -756,8 +756,8 @@ sub describeResource($)
     ($rc, struct_to_hash $details);
 }
 
-=method countResources [COLLECTION]
-[non-API] Returns the number of resources in the COLLECTION.
+=method countResources [$collection]
+[non-API] Returns the number of resources in the $collection.
 =example
   my ($rc, $count) = $db->countResources($collection);
 =cut
@@ -769,7 +769,7 @@ sub countResources(;$)
     $self->{rpc}->getResourceCount(string => $coll);
 }
 
-=method moveResource FROM, TOCOLL, TONAME
+=method moveResource $from, $tocoll, $toname
 =example
   my ($rc, $success) = $db->moveResource(...);
 =cut
@@ -780,8 +780,8 @@ sub moveResource($$$)
     $self->{rpc}->moveResource(string=> $_[0], string=> $_[1], string=> $_[2]);
 }
 
-=method getDocType DOCUMENT
-Returns details about the DOCUMENT, the docname, public-id and system-id
+=method getDocType $document
+Returns details about the $document, the docname, public-id and system-id
 as list of three.
 =example
   my ($docname, $public, $system) = $db->getDocType($doc);
@@ -794,8 +794,8 @@ sub getDocType($)
     ($rc, rpcarray_values $details);
 }
 
-=method setDocType DOCUMENT, TYPENAME, PUBLIC_ID, SYSTEM_ID
-Add DOCTYPE information to a DOCUMENT.
+=method setDocType $document, $typename, $public_id, $system_id
+Add DOCTYPE information to a $document.
 
 =example
   $rpc->setDocType($doc, "HTML"
@@ -815,19 +815,19 @@ sub setDocType($$$$)
       , string => $name, string => $pub, string => $sys);
 }
 
-=method whoLockedResource RESOURCE
+=method whoLockedResource $resource
 [non-API] Returns a username.
 =cut
 
 sub whoLockedResource($) {$_[0]->{rpc}->hasUserLock(string => $_[1]) }
 
-=method unlockResource RESOURCE
+=method unlockResource $resource
 Returns its success.
 =cut
 
 sub unlockResource($) {$_[0]->{rpc}->unlockResource(string => $_[1]) }
 
-=method lockResource RESOURCE, [USERNAME]
+=method lockResource $resource, [$username]
 =cut
 
 sub lockResource($;$)
@@ -837,7 +837,7 @@ sub lockResource($;$)
     $self->{rpc}->lockResource(string => $resource, string => $user);
 }
 
-=method removeResource DOCNAME
+=method removeResource $docname
 [non-API] remove a DOCument from the repository by NAME.  This method's name
 is more consistent than the official API name C<remove()>.
 =cut
@@ -847,7 +847,7 @@ sub removeResource($) { $_[0]->{rpc}->remove(string => $_[1]) }
 #--------------------
 =subsection Download documents
 
-=method downloadDocument RESOURCE, FORMAT
+=method downloadDocument $resource, $format
 Returns a document as byte array.
 =cut
 
@@ -871,7 +871,7 @@ sub downloadDocument($@)
 
 # does this also work for binary resources?
 
-=method listResourceTimestamps RESOURCE
+=method listResourceTimestamps $resource
 [non-API] Returns the creation and modification dates.
 =example
    my ($rc, $created, $modified) = $db->listResourceTimestamps($resource);
@@ -887,7 +887,7 @@ sub listResourceTimestamps($)
 #-----------------
 =subsection Upload documents
 
-=method uploadDocument RESOURCE, DOCUMENT, OPTIONS
+=method uploadDocument $resource, $document, %options
 [non-API] Hide all the different kinds of uploads via M<parse()> or
 M<upload()> behind one interface.
 
@@ -946,7 +946,7 @@ sub uploadDocument($$@)
     $self->parseLocal($tmp, $resource, $replace, $mime, @dates);
 }
 
-=method downloadBinary RESOURCE
+=method downloadBinary $resource
 [non-API] Get the bytes of a binary file from the server.
 =example
   my ($rc, $bytes) = $db->downloadBinary($resource);
@@ -954,8 +954,8 @@ sub uploadDocument($$@)
 
 sub downloadBinary($) { $_[0]->{rpc}->getBinaryResource(string => $_[1]) }
 
-=method uploadBinary RESOURCE, BYTES, MIME, REPLACE, [CREATED, MODIFIED]
-[non-API] The BYTES can be passed as string or better as string reference.
+=method uploadBinary $resource, $bytes, $mime, $replace, [$created, $modified]
+[non-API] The $bytes can be passed as string or better as string reference.
 =example
   my ($rc, $ok) = $db->storeBinaryResource($name, $bytes, 'text/html', 1);
 =cut
@@ -975,7 +975,7 @@ sub uploadBinary($$$$;$$)
 
 =subsection Compiled queries
 
-=method compile QUERY, FORMAT
+=method compile $query, $format
 Returns a HASH.
 =cut
 
@@ -989,7 +989,7 @@ sub compile($@)
     (0, struct_to_hash $details);
 }
 
-=method describeCompile QUERY, FORMAT
+=method describeCompile $query, $format
 [non-API] Returns a string which contains the diagnostics of compiling
 the query.
 =cut
@@ -1001,7 +1001,7 @@ sub describeCompile($@)
     $self->{rpc}->printDiagnostics(string => $query, $self->_format(@_));
 }
 
-=method execute QUERYHANDLE, FORMAT
+=method execute $queryhandle, $format
 Returns a HASH.
 =cut
 
@@ -1016,8 +1016,8 @@ sub execute($@)
 #-----------------
 =subsection Query returns result as set
 
-=method executeQuery QUERY, [ENCODING], [FORMAT]
-Run the QUERY given in the specified ENCODING.  Returned is
+=method executeQuery $query, [$encoding], [$format]
+Run the $query given in the specified $encoding.  Returned is
 only an identifier to the result.
 
 =example
@@ -1033,14 +1033,14 @@ sub executeQuery($@)
     $self->{rpc}->executeQuery(base64 => $query, @enc, $self->_format(@_));
 }
 
-=method numberOfResults RESULTSET
+=method numberOfResults $resultset
 [non-API] Returns the number of answers in the RESULT set of a query.
 Replaces C<getHits()>.
 =cut
 
 sub numberOfResults($) { $_[0]->{rpc}->getHits(int => $_[1]) }
 
-=method describeResultSet RESULTSET
+=method describeResultSet $resultset
 [non-API] Retrieve a summary of the result set identified by it's
 result-set-id. This method returns a HASH with simple values
 C<queryTime> (milli-seconds) and C<hits> (number of results).
@@ -1072,8 +1072,8 @@ sub describeResultSet($)
     ($rc, $results);
 }
 
-=method releaseResultSet RESULTSET, [PARAMS]
-[non-API] Give-up on the RESULTSET on the server.
+=method releaseResultSet $resultset, [$params]
+[non-API] Give-up on the $resultset on the server.
 =cut
 
 #### what kind of params from %args?
@@ -1083,7 +1083,7 @@ sub releaseResultSet($@)
     $self->{rpc}->releaseQueryResult(int => $results, int => 0);
 }
 
-=method retrieveResult RESULTSET, POS, [FORMAT]
+=method retrieveResult $resultset, $pos, [$format]
 [non-API] retrieve a single result from the RESULT-SET.
 Replaces M<retrieve()> and M<retrieveFirstChunk()>.
 =cut
@@ -1096,7 +1096,7 @@ sub retrieveResult($$@)
     (0, $self->schemas->decodeXML($bytes));
 }
 
-=method retrieveResults RESULTSET, [FORMAT]
+=method retrieveResults $resultset, [$format]
 Replaces M<retrieveAll()> and M<retrieveAllFirstChunk()>.
 =cut
 
@@ -1113,7 +1113,7 @@ sub retrieveResults($@)
 #-----------------
 =subsection Query returns result
 
-=method query QUERY, LIMIT, [FIRST], [FORMAT]
+=method query $query, $limit, [$first], [$format]
 Returns a document of the collected results.
 
 This method is deprecated according to the java description, in favor of
@@ -1131,7 +1131,7 @@ sub query($$$@)
     (0, $self->schemas->decodeXML($bytes));
 }
 
-=method queryXPath XPATH, DOCNAME, NODE_ID, OPTIONS
+=method queryXPath $xpath, $docname, $node_id, %options
 When DOCUMENT is defined, then the search is limited to that document,
 optionally further restricted to the NODE with the indicated ID.
 
@@ -1161,7 +1161,7 @@ sub queryXPath($$$@)
 #-----------------
 =subsection Simple node queries
 
-=method retrieveDocumentNode DOCUMENT, NODEID, [FORMAT]
+=method retrieveDocumentNode $document, $nodeid, [$format]
 [non-API] Collect one node from a certain document. Doesn't matter
 how large: this method will always work (by always using chunks).
 =cut
@@ -1185,7 +1185,7 @@ sub retrieveDocumentNode($$@)
 #-----------------
 =subsection Modify document content
 
-=method updateResource RESOURCE, XUPDATE, [ENCODING]
+=method updateResource $resource, $xupdate, [$encoding]
 =example
   my ($rc, $some_int) = $db->updateResource($resource, $xupdate);
 =cut
@@ -1199,7 +1199,7 @@ sub updateResource($$;$)
 
 ### What does the returned int mean?
 ### Does this update the collection configuration?
-=method updateCollection COLLECTION, XUPDATE
+=method updateCollection $collection, $xupdate
 [non-API]
 =example
   my ($rc, $some_int) = $db->updateCollection($coll, $xupdate);
@@ -1212,9 +1212,9 @@ sub updateCollection($$)
 #-----------------
 =section Indexing
 
-=method scanIndexTerms COLLECTION, BEGIN, END, RECURSIVE
+=method scanIndexTerms $collection, $begin, $end, $recursive
 
-or C<< $db->scanIndexTerms(XPATH, BEGIN, END) >>.
+or C<< $db->scanIndexTerms(XPATH, $begin, $end) >>.
 
 =examples
   my ($rc, $details) = $db->scanIndexTerms($xpath, $begin, $end);
@@ -1240,7 +1240,7 @@ sub scanIndexTerms($$$;$)
     (0, rpcarray_values $details);
 }
 
-=method getIndexedElements COLLECTION, RECURSIVE
+=method getIndexedElements $collection, $recursive
 =cut
 
 sub getIndexedElements($$)
@@ -1294,7 +1294,7 @@ avoid using the methods described in this section (although they do work)
 
 =subsection Please avoid: collections
 
-=method getCollectionDesc [COLLECTION]
+=method getCollectionDesc [$collection]
 Please use M<describeCollection()> with option C<< documents => 0 >>.
 =cut
 
@@ -1308,10 +1308,10 @@ sub getCollectionDesc(;$)
 #---------
 =subsection Please avoid: download documents
 
-=method getDocument RESOURCE, FORMAT|(ENCODING, PRETTY, STYLE)
-Please use M<downloadDocument()>.  Either specify FORMAT parameters
+=method getDocument $resource, $format|<$encoding, $pretty, $style>
+Please use M<downloadDocument()>.  Either specify $format parameters
 (a list of pairs), or three arguments.  In the latter case, the
-STYLE must be present but may be C<undef>.  STYLE refers to a
+$style must be present but may be C<undef>.  $style refers to a
 stylesheet document.
 =cut
 
@@ -1329,7 +1329,7 @@ sub getDocument($$;$$)
     $self->{rpc}->getDocument(string => $resource, @args);
 }
 
-=method getDocumentAsString RESOURCE, FORMAT|(ENCODING, PRETTY, STYLE)
+=method getDocumentAsString $resource, $format|<$encoding, $pretty, $style>
 Please use M<downloadDocument()>. See M<getDocument()>.
 =cut
 
@@ -1347,7 +1347,7 @@ sub getDocumentAsString($$;$$)
     $self->{rpc}->getDocumentAsString(string => $resource, @args);
 }
 
-=method getDocumentData RESOURCE, FORMAT
+=method getDocumentData $resource, $format
 Please use M<downloadDocument()>.
 Retrieve the specified document, but limit the number of bytes
 transmitted to avoid memory shortage on the server. The size of the
@@ -1377,7 +1377,7 @@ sub getDocumentData($@)
     (0, struct_to_hash $details);
 }
 
-=method getNextChunk TMPNAME, OFFSET
+=method getNextChunk $tmpname, $offset
 Collect the next chunk, initiated with a M<getDocumentData()>. The file
 is limited to 2GB.
 =cut
@@ -1390,7 +1390,7 @@ sub getNextChunk($$)
     (0, struct_to_hash $details);
 }
 
-=method getNextExtendedChunk TMPNAME, OFFSET
+=method getNextExtendedChunk $tmpname, $offset
 Collect the next chunk, initiated with a M<getDocumentData()>. This method
 can only be used with servers which run an eXist which supports long files.
 =cut
@@ -1406,10 +1406,10 @@ sub getNextExtendedChunk($$)
 #---------
 =subsection Please avoid: uploading documents
 
-=method parse DOCUMENT, RESOURCE, [REPLACE, [CREATED, MODIFIED]]
+=method parse $document, $resource, [$replace, [$created, $modified]]
 Please use M<uploadDocument()>.
-Store the DOCUMENT of a document under the RESOURCE name into the
-repository. When REPLACE is true, it will overwrite an existing document
+Store the $document of a document under the $resource name into the
+repository. When $replace is true, it will overwrite an existing document
 when it exists.
 
 The DATA can be a string containing XML or M<XML::LibXML::Document>.
@@ -1425,10 +1425,10 @@ sub parse($$;$$$)
       );
 }
 
-=method parseLocal TEMPNAME, RESOURCE, REPLACE, MIME, [CREATED, MODIFIED]
+=method parseLocal $tempname, $resource, $replace, $mime, [$created, $modified]
 Please use M<uploadDocument()>.
 Put the content of document which was just oploaded to the server under some
-TEMPNAME (received from M<upload()>), as RESOURCE in the database.
+$tempname (received from M<upload()>), as $resource in the database.
 
 NB: B<Local> means "server local", which is remote for us as clients.
 =cut
@@ -1442,11 +1442,11 @@ sub parseLocal($$$$;$$)
       );
 }
 
-=method parseLocalExt TEMPNAME, RESOURCE, REPLACE, MIME, ISXML, [CREATED, MODIFIED]
+=method parseLocalExt $tempname, $resource, $replace, $mime, $isxml, [$created, $modified]
 Please use M<uploadDocument()>.
 Put the content of document which was just oploaded with M<upload()> to
-the server under some TEMPNAME (received from M<upload()>) as RESOURCE
-in the database. Like M<parseLocal()>, but with extra C<ISXML> boolean,
+the server under some $tempname (received from M<upload()>) as $resource
+in the database. Like M<parseLocal()>, but with extra C<$isxml> boolean,
 to indicate that the object is XML, where the server does not know that
 from the mime-type.
 
@@ -1463,7 +1463,7 @@ sub parseLocalExt($$$$;$$)
       );
 };
 
-=method upload [TEMPNAME], CHUNK
+=method upload [$tempname], $chunk
 Please use M<uploadDocument()>.
 Upload a document in parts to the server. The first upload will give
 you the TEMPoraryNAME for the object. You may leave that name out or
@@ -1490,7 +1490,7 @@ sub upload($;$)
        , base64 => $_[0], int => length($_[0]));
 }
 
-=method uploadCompressed [TEMPNAME], CHUNK
+=method uploadCompressed [$tempname], $chunk
 Please use M<uploadDocument()>.
 Like M<upload()>, although the chunks are part of a compressed file.
 =cut
@@ -1506,7 +1506,7 @@ sub uploadCompressed($;$)
        , base64 => $_[0], int => length($_[1]));
 }
 
-=method storeBinary BYTES, RESOURCE, MIME, REPLACE, [CREATED, MODIFIED]
+=method storeBinary $bytes, $resource, $mime, $replace, [$created, $modified]
 Please use M<uploadBinary()>.
 =cut
 
@@ -1515,7 +1515,7 @@ sub storeBinary($$$$;$$) { $_[0]->uploadBinary( @_[2, 1, 3, 4, 5, 6] ) }
 #-------
 =subsection Please avoid: simple node queries
 
-=method retrieveFirstChunk (DOCUMENT, NODEID)|(RESULTSET, POS), [FORMAT]
+=method retrieveFirstChunk <($doc, $nodeid) | ($resultset, $pos)>, [$format]
 Please use M<retrieveDocumentNode()> or M<retrieveResult()>.
 Two very different uses for this method: either retrieve the first part
 of a single node from a document, or retrieve the first part of an
@@ -1541,7 +1541,7 @@ sub retrieveFirstChunk($$@)
 #------------------
 =subsection Please avoid: collect query results
 
-=method retrieve (DOCUMENT, NODEID)|(RESULTSET, POS), [FORMAT]
+=method retrieve <($doc, $nodeid) | ($resultset, $pos)>, [$format]
 Please use M<retrieveResult()> or M<retrieveDocumentNode()>.
 =cut
 
@@ -1556,7 +1556,7 @@ sub retrieve($$@)
     (0, $self->schemas->decodeXML($bytes));
 }
 
-=method retrieveAll RESULTSET, [FORMAT]
+=method retrieveAll $resultset, [$format]
 Please use M<retrieveResults()>.
 =cut
 
@@ -1568,7 +1568,7 @@ sub retrieveAll($$@)
     (0, $self->schemas->decodeXML($bytes));
 }
 
-=method retrieveAllFirstChunk RESULTSET, [FORMAT]
+=method retrieveAllFirstChunk $resultset, [$format]
 Please use M<retrieveResults()>.
 =cut
 
@@ -1580,8 +1580,8 @@ sub retrieveAllFirstChunk($$@)
     (0, struct_to_hash $details);
 }
 
-=method isValidDocument DOCUMENT
-Returns true when the DOCUMENT (inside the database) is validated as
+=method isValidDocument $document
+Returns true when the $document (inside the database) is validated as
 correct.
 =cut
 
@@ -1590,8 +1590,8 @@ sub isValidDocument($)
     $self->{rpc}->isValid(string => $doc);
 }
 
-=method initiateBackup DIRECTORY
-Trigger the backup task to write to the DIRECTORY. Returns true, always,
+=method initiateBackup $directory
+Trigger the backup task to write to the $directory. Returns true, always,
 but that does not mean success: the initiation will succeed.
 =cut
 
@@ -1600,7 +1600,7 @@ sub initiateBackup($)
     $self->{rpc}->dataBackup($s);
 }
 
-=method getDocumentChunked DOCNAME, OPTIONS
+=method getDocumentChunked $docname, %options
 Please use M<downloadDocument()>
 =example
    my ($rc, $handle, $total_length) = $db->getDocumentChuncked($doc);
@@ -1614,7 +1614,7 @@ sub getDocumentChunked($@)
     (0, rpcarray_values $data);
 }
 
-=method getDocumentNextChunk HANDLE, START, LENGTH
+=method getDocumentNextChunk $handle, $start, $length
 =cut
 
 sub getDocumentNextChunk($$$)
@@ -1623,7 +1623,7 @@ sub getDocumentNextChunk($$$)
       , int => $start, int => $len);
 }
 
-=method retrieveAsString DOCUMENT, NODEID, OPTIONS
+=method retrieveAsString $document, $nodeid, %options
 =cut
 
 sub retrieveAsString($$@)
@@ -1638,7 +1638,7 @@ Quite a number of API methods have been renamed to be more consistent
 with other names.  Using the new names should improve readibility. The
 original names are still available:
 
-  -- xml-rpc name              -- replacement name
+  -- xml-rpc name           -- replacement name
   createResourceId          => uniqueResourceName
   dataBackup                => initiateBackup
   getBinaryResource         => downloadBinary

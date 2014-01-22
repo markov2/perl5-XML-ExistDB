@@ -42,7 +42,7 @@ the implementation to facilitate different XML databases back-ends.
 
 =section Constructors
 
-=c_method new OPTIONS
+=c_method new %options
 
 =default allow_undeclared <true>
 
@@ -67,15 +67,15 @@ sub init($)
     (my $xsddir = __FILE__) =~ s,\.pm,/xsd-exist,;
     my @xsds    = glob "$xsddir/*.xsd";
 
-    $self->prefixes(exist => NS_EXISTDB);
+    $self->addPrefixes(exist => NS_EXISTDB);
     $self->importDefinitions(\@xsds);
     $self;
 }
 
 =section Collection configuration (.xconf)
 
-=method createCollectionConfig DATA, OPTIONS
-The DATA structure should provide the needs for an collection configuration
+=method createCollectionConfig $data, %options
+The $data structure should provide the needs for an collection configuration
 file, in the shape C<XML::Compile> expects based on the schema. See the
 C<template/collection.xconf>, which is part of the distribution.
 

@@ -1,6 +1,12 @@
 
 ========= version history of XML::eXistDB
 
+version 0.13:
+
+	Improvements:
+	- use ::Cache::addPrefixes()
+	- change documentation style
+
 version 0.12: Tue Aug 28 11:13:19 CEST 2012
 	- fix upload() and uploadDocument() in various ways
 	  rt.cpan.org #77963 [Rik van den Eijnden]
