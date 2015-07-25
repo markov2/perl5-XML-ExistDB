@@ -113,7 +113,8 @@ such object.
 
 =option  destination URI
 =default destination <undef>
-Where the RPC server is (the ExistDB access point)
+Where the RPC server is (the ExistDB access point).  For instance
+C<http://localhost:8080/exist/xmlrpc>
 
 =option  rpc OBJECT
 =default rpc <undef>
@@ -174,7 +175,7 @@ sub init($)
       = defined $args->{compress_upload} ? $args->{compress_upload} : 128;
     $self->{chunks}  = defined $args->{chunk_size} ? $args->{chunk_size} : 32;
 
-    $self->login($args->{user} || 'guest', $args->{password} || 'guest');
+    $self->login($args->{user} // 'guest', $args->{password} // 'guest');
     $self->{pp_up}   = $args->{prettyprint_upload} ? 1 : 0;
     $self->{schemas} = $args->{schemas};
 

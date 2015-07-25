@@ -1,7 +1,13 @@
 
 ========= version history of XML::eXistDB
 
-version 0.13:
+version 0.14: Sat Jul 25 23:41:24 CEST 2015
+
+	Fixes:
+	- allow empty string for username and password [Alberto Simões]
+	- fix handling of undef values.
+
+version 0.13: Wed Jan 22 11:27:48 CET 2014
 
 	Improvements:
 	- use ::Cache::addPrefixes()
