@@ -20,18 +20,18 @@ isa_ok($db, 'XML::eXistDB::RPC', "rpc to $uri");
 
 my ($rc, $desc) = $db->getCollectionDesc;
 cmp_ok($rc, '==', 0, 'got description');
+#warn Dumper $desc;
 isa_ok($desc, 'HASH', '... with data');
 is($desc->{name}, '/db');
-is($desc->{owner}, 'admin');
+is($desc->{owner}, 'SYSTEM');
 
-($rc, my @subs) = $db->subCollections;
+($rc, my $subs) = $db->subCollections;
 cmp_ok($rc, '==', 0, 'got sub-collections');
 
 my $collname = "$desc->{name}/test-coll";
 my $system   = "$desc->{name}/system";
 
-my %subs = map { $_ => 1 } @subs;
-
+my %subs = map +($_ => 1), @$subs;
 ok($subs{$system}, "found $system");
 
 ($rc, my $creation) = $db->collectionCreationDate;
@@ -42,15 +42,17 @@ like($creation, qr/^(19[0-9][0-9]|20[0-9][0-9])-/ ,"check creation: $creation");
 cmp_ok($rc, '==', 0, "created collection $collname");
 ok($success);
 
-($rc, my @subs2) = $db->subCollections;
+$rc == 0 or die "failed creating collection $collname: $success";
+
+($rc, my $subs2) = $db->subCollections;
 cmp_ok($rc, '==', 0, 'got sub-collections again');
-my %subs2 = map { $_ => 1 } @subs2;
+my %subs2 = map +($_ => 1), @$subs2;
 ok($subs2{$system});
 ok($subs2{$collname});
 
-($rc, my @subs3) = $db->subCollections($collname);
+($rc, my $subs3) = $db->subCollections($collname);
 cmp_ok($rc, '==', 0, "got subs of $collname");
-cmp_ok(scalar @subs3, '==', 0, 'no subs for sub');
+cmp_ok(scalar @$subs3, '==', 0, 'no subs for sub');
 
 ($rc, my $testdb) = $db->getCollectionDesc($collname);
 cmp_ok($rc, '==', 0, "get descr of $collname");
@@ -63,8 +65,10 @@ my %config = (validation => {mode => 'yes'});
 ($rc, my $descr) = $db->describeCollection($collname);
 cmp_ok($rc, '==', 0, "describe collection $collname");
 
-# only diff between describeCollection and getCollectionDesc
+# remove expected diffs between describeCollection and getCollectionDesc
 delete $testdb->{documents};
+delete $descr->{acl};
+#warn Dumper $testdb, $descr;
 is_deeply($testdb, $descr);
 
 ($rc, my $has) = $db->hasCollection($collname);
@@ -89,12 +93,14 @@ local $TODO = "Exist 1.4 server crashes";
 
 cmp_ok($rc, '==', 0, "permissions for top-level");
 
-warn Dumper $db->trace->{request}->as_string;
+#warn Dumper $db->trace->{request}->as_string;
 warn Dumper $db->trace->{response}->as_string;
 
+warn "PERMS($system) ",Dumper $perms;
 if(ref $perms)
 {  is_deeply($perms->{$system}
       , {user => 'admin', group => 'dba',   mode => 504});
+
    is_deeply($perms->{$collname}
       , {user => 'guest', group => 'guest', mode => 493});
 }
@@ -114,9 +120,9 @@ cmp_ok($success, '==', 1);
 cmp_ok($rc, '==', 0, "remove");
 cmp_ok($success, '==', 1);
 
-($rc, my @subs4) = $db->subCollections;
+($rc, my $subs4) = $db->subCollections;
 cmp_ok($rc, '==', 0, 'check_removal');
-my %subs4 = map { $_ => 1 } @subs4;
+my %subs4 = map +($_ => 1), @$subs4;
 ok(!$subs4{collname});
 
 ($rc, my $acml) = $db->isXACMLEnabled;

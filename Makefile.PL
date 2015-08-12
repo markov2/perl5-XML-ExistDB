@@ -1,20 +1,19 @@
 use ExtUtils::MakeMaker;
 
-use 5.008;
+use 5.010;
 
 WriteMakefile
  ( NAME	 	=> 'XML::ExistDB'
- , VERSION	=> '0.14'
+ , VERSION	=> '1.00'
  , PREREQ_PM    =>
-   { XML::Compile              => 1.08
-   , XML::Compile::Cache       => 0.995
-   , XML::Compile::RPC         => 0.13
+   { XML::Compile              => 1.50
+   , XML::Compile::Cache       => 1.04
+   , XML::Compile::RPC         => 0.18
    , Log::Report               => 0.26
    , Time::HiRes               => 0
    , LWP::UserAgent            => 0
    , MIME::Base64              => 0
    , Test::More                => 0.54
-   , Test::Pod                 => '1.00'
    }
 
  , EXE_FILES    => []

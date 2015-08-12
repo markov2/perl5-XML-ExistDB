@@ -59,12 +59,6 @@ cmp_ok($ok, 'eq', 1);
 ($rc, my $stats) = $db->compile($question);
 cmp_ok($rc, '==', 0, 'compile hello world');
 
-#use Data::Dumper;
-#warn $question;
-#warn Dumper $stats;
-#warn $db->trace->{request}->as_string;
-#warn $db->trace->{response}->as_string;
-
 ($rc, my $descr) = $db->describeCompile($question);
 cmp_ok($rc, '==', 0, 'describe compile');
 is("$descr\n", <<'__STATS');

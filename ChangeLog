@@ -1,6 +1,33 @@
 
 ========= version history of XML::eXistDB
 
+version 1.00:
+
+	Changes:
+	- All functions now have the same return parameters:
+	  ($rc, $data, $trace)    A few functions returned ($rc, @list),
+	  which have been rewritten into ($rc, \@list, $trace).  Most
+	  functions did not need to change.  Specific, the following
+	  functions got changed:
+	  . subCollections
+	  . listResources                     getDocumentListing
+	  . listGroups                        getGroups
+	  . getDocType
+	  . listResourceTimestamps            getTimestamps
+	  . scanIndexTerms
+	  . indexedElements                   getIndexedElements
+	- XML::ExistDB::RPC now extends XML::ExistDB
+	- XML::ExistDB does not extend XML::Compile::Cache anymore,
+	  but shares the schemas of the XML::Compile::RPC::Client if
+	  used.
+
+	Improvements:
+	- add $trace to many functions
+	- remove dependency to Test::POD
+	- getIndexedElements renamed to indexedElements
+	- extent existdb.xsd schema with exist:value [Alberto Simões]
+	- put <entry> in schema
+
 version 0.14: Sat Jul 25 23:41:24 CEST 2015
 
 	Fixes:

@@ -2,12 +2,12 @@ use warnings;
 use strict;
 
 package XML::eXistDB;
-use base 'XML::Compile::Cache';
 
 use Log::Report 'xml-existdb', syntax => 'SHORT';
 
 use XML::eXistDB::Util;
 use XML::Compile::Util  qw/pack_type type_of_node/;
+use XML::Compile::Cache ();
 use XML::LibXML::Simple qw/XMLin/;
 
 my $coll_type = pack_type NS_COLLECTION_XCONF, 'collection';
@@ -44,34 +44,39 @@ the implementation to facilitate different XML databases back-ends.
 
 =c_method new %options
 
-=default allow_undeclared <true>
-
-=option  opts_readers []
-=default opts_readers <sloppy ints and floats>
+=option  schemas M<XML::Compile::Cache> object
+=default schemas <created internally>
+Overrule the location to load the schemas.
 
 =cut
+
+sub new(@) { my $class = shift; (bless {}, $class)->init({@_}) }
 
 sub init($)
 {   my ($self, $args) = @_;
 
-    exists $args->{allow_undeclared}
-        or $args->{allow_undeclared} = 1;
+    my $schemas = $self->{schemas} ||= XML::Compile::Cache->new;
 
-    $args->{any_element} ||= 'SLOPPY';   # query results are sloppy
-
-    unshift @{$args->{opts_readers}}
-       , sloppy_integers => 1, sloppy_floats => 1;
-
-    $self->SUPER::init($args);
+    $schemas->allowUndeclared(1);
+    $schemas->anyElement('SLOPPY');   # query results are sloppy
+    $schemas->addCompileOptions('RW', sloppy_integers => 1, sloppy_floats => 1);
+    $schemas->addPrefixes(exist => NS_EXISTDB);
 
     (my $xsddir = __FILE__) =~ s,\.pm,/xsd-exist,;
     my @xsds    = glob "$xsddir/*.xsd";
+    $schemas->importDefinitions(\@xsds);
 
-    $self->addPrefixes(exist => NS_EXISTDB);
-    $self->importDefinitions(\@xsds);
     $self;
 }
 
+#-----------------
+=section Attributes
+=method schemas
+=cut
+
+sub schemas() {shift->{schemas}}
+
+#-----------------
 =section Collection configuration (.xconf)
 
 =method createCollectionConfig $data, %options
@@ -85,25 +90,17 @@ C<template/collection.xconf>, which is part of the distribution.
 
 sub createCollectionConfig($%)
 {   my ($self, $data, %args) = @_;
-
     my $format = (!exists $args{beautify} || $args{beautify}) ? 1 : 0;
-    my $string;
 
     # create XML via XML::Compile
-    my $writer = $self->{wr_coll_conf} ||=
-      $self->compile
-      ( WRITER => $coll_type
-      , include_namespaces => 1, sloppy_integers => 1
-      );
-
     my $doc    = XML::LibXML::Document->new('1.0', 'UTF-8');
-    my $xml    = $writer->($doc, $data);
+    my $xml    = $self->schemas->writer($coll_type)->($doc, $data);
     $doc->setDocumentElement($xml);
     $doc->toString($format);
 }
 
 # perl -MXML::eXistDB -e 'print XML::eXistDB->new->_coll_conf_template'
-sub _coll_conf_template { shift->template(PERL => $coll_type) }
+sub _coll_conf_template { shift->schemas->template(PERL => $coll_type) }
 
 =method decodeXML STRING
 Received is a STRING produced by the server. Decode it, into the most
@@ -111,11 +108,14 @@ useful Perl data structure.
 =cut
 
 sub decodeXML($)
-{   my $self  = shift;
-    my $xml   = $self->dataToXML(shift);
-    my $type  = type_of_node $xml;
-    my $known = $self->namespaces->find(element => $type);
-    $known ? $self->reader($type)->($xml) : XMLin $xml;
+{   my $self    = shift;
+    my $schemas = $self->schemas;
+    my $xml     = $schemas->dataToXML(shift);
+
+    my $type    = type_of_node $xml;
+    my $known   = $schemas->namespaces->find(element => $type);
+warn "READER $type=", $schemas->reader($type);
+    $known ? $schemas->reader($type)->($xml) : XMLin $xml;
 }
 
 1;

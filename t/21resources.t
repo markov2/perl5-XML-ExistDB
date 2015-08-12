@@ -27,9 +27,9 @@ my ($rc, $success) = $db->createCollection($collname);
 cmp_ok($rc, '==', 0, "created collection $collname");
 ok($success);
 
-($rc, my @docs) = $db->listResources($collname);
+($rc, my $docs) = $db->listResources($collname);
 cmp_ok($rc, '==', 0, "list empty collection $collname");
-cmp_ok(scalar @docs, '==', 0, 'no docs yet');
+cmp_ok(scalar @$docs, '==', 0, 'no docs yet');
 
 ### add document
 
@@ -37,10 +37,10 @@ my $doc1 = "$collname/doc1.xml";
 ($rc, $success) = $db->uploadDocument($doc1, "<doc><a/></doc>");
 cmp_ok($rc, '==', 0, 'upload first document');
 
-($rc, @docs) = $db->listResources($collname);
+($rc, $docs) = $db->listResources($collname);
 cmp_ok($rc, '==', 0, "first doc in $collname");
-cmp_ok(scalar @docs, '==', 1, 'one doc in list');
-is($docs[0], 'doc1.xml');
+cmp_ok(scalar @$docs, '==', 1, 'one doc in list');
+is($docs->[0], 'doc1.xml');
 
 ($rc, my $count) = $db->countResources($collname);
 cmp_ok($rc, '==', 0, "first count");
@@ -53,19 +53,19 @@ cmp_ok(keys %$details, '>', 5);
 is($details->{type}, 'XMLResource');
 is($details->{group}, 'guest');
 
-($rc, my @ts) = $db->listResourceTimestamps($doc1);
+($rc, my $ts) = $db->listResourceTimestamps($doc1);
 cmp_ok($rc, '==', 0, "document timestamps");
-cmp_ok(scalar @ts, '==', 2);
+cmp_ok(scalar @$ts, '==', 2);
 
 ($rc, my $s) = $db->setDocType($doc1, 'name', 'pub', 'sys');
 cmp_ok($rc, '==', 0, "set doctype");
 cmp_ok($s, '==', 1);
 
-($rc, my $n, my $pub, my $sys) = $db->getDocType($doc1);
+($rc, my $type) = $db->getDocType($doc1);
 cmp_ok($rc, '==', 0, "get doctype");
-is($n, 'name');
-is($pub, 'pub');
-is($sys, 'sys');
+is($type->{docname}, 'name');
+is($type->{public},  'pub');
+is($type->{system},  'sys');
 
 ### add binary
 
@@ -76,10 +76,10 @@ my $fakebin = "ABCDEF";
 cmp_ok($rc, '==', 0, "added binary to $collname");
 cmp_ok($success, 'eq', 1);
 
-($rc, @docs) = $db->listResources($collname);
+($rc, $docs) = $db->listResources($collname);
 cmp_ok($rc, '==', 0, "binaries not shown");
-cmp_ok(scalar @docs, '==', 2, 'now two element in the list');
-@docs = sort @docs;
+cmp_ok(scalar @$docs, '==', 2, 'now two element in the list');
+my @docs = sort @$docs;
 is($docs[0], 'doc1.xml');
 is($docs[1], 'fake-img.jpg');
 
@@ -96,9 +96,9 @@ is($details->{'content-length'}, length $fakebin);
 #($rc, $details) = $db->describeCollection($collname, documents => 1);
 #warn Dumper $details;
 
-($rc, @ts) = $db->listResourceTimestamps($img);
+($rc, $ts) = $db->listResourceTimestamps($img);
 cmp_ok($rc, '==', 0, "binary timestamps");
-cmp_ok(scalar @ts, '==', 2);
+cmp_ok(keys %$ts, '==', 2);
 
 ### download document
 

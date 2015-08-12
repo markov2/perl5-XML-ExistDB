@@ -26,10 +26,11 @@ $db->removeCollection($collname);  # result from test crash
 my ($rc, $success) = $db->createCollection($collname);
 cmp_ok($rc, '==', 0, "created collection $collname");
 ok($success);
+$rc and die "cannot create collection $collname: $success";
 
-($rc, my @res) = $db->listResources($collname);
+($rc, my $res) = $db->listResources($collname);
 cmp_ok($rc, '==', 0, "list resources in $collname");
-cmp_ok(scalar @res, '==', 0, "new collection is empty");
+cmp_ok(scalar @$res, '==', 0, "new collection is empty");
 
 my $doc1 = "$collname/doc.xml";
 my $doc1xml = '<doc><a><b>3</b><c/></a></doc>';
@@ -58,9 +59,9 @@ my %expusers =
 cmp_ok($rc, '==', 0, 'list users');
 is_deeply($users, \%expusers);
 
-($rc, my @groups) = $db->listGroups;
+($rc, my $groups) = $db->listGroups;
 cmp_ok($rc, '==', 0, 'list groups');
-is_deeply( [sort @groups], [ 'dba', 'guest' ] );
+is_deeply( [sort @$groups], [ 'dba', 'guest' ] );
 
 my $home = "$collname/markov";
 ($rc, $ok) = $db->setUser('markov', 'testpw', 'guest', $home);
