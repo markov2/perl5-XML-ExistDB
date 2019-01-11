@@ -1,8 +1,12 @@
-use warnings;
-use strict;
+# This code is part of distribution XML-ExistsDB.  Meta-POD processed with
+# OODoc into POD and HTML manual-pages.  See README.md
+# Copyright Mark Overmeer.  Licensed under the same terms as Perl itself.
 
 package XML::eXistDB::RPC;
 use base 'XML::eXistDB';
+
+use warnings;
+use strict;
 
 use Log::Report 'xml-existdb', syntax => 'LONG';
 
@@ -16,15 +20,15 @@ use Digest::MD5  qw/md5_base64 md5_hex/;
 use Encode       qw/encode/;
 use MIME::Base64 qw/encode_base64/;
 
-#use Data::Dumper;
-#$Data::Dumper::Indent = 1;
+use Data::Dumper;
+$Data::Dumper::Indent = 1;
 
 my $dateTime = 'dateTime.iso8601';  # too high chance on typos
 
 =chapter NAME
 XML::eXistDB::RPC - access eXist databases via RPC
 
-=chapter SYNOPSYS
+=chapter SYNOPSIS
   my $db = XML::eXistDB::RPC->new(destination => $uri);
   my ($rc1, $h, $trace) = $db->describeUser('guest');
   $rc1==0 or die "Error: $h\n";
@@ -243,6 +247,9 @@ sub _date_options($$)
     : report ERROR => "either both or neither creation and modification date";
 }
 
+# in Perl, any value is either true or false, in rpc only 0 and 1
+sub _bool($) { $_[0] ? 0 : 1 }
+
 =subsection Sending XML
 
 Some method accept a DOCUMENT which can be a M<XML::LibXML::Document>
@@ -409,7 +416,7 @@ sub configureCollection($$%)
         $config = $conf;
     }
     else
-    {   $config = $self->schemas->createCollectionConfig($conf, %args);
+    {   $config = $self->createCollectionConfig($conf, %args);
     }
 
     $self->rpcClient->configureCollection(string => $coll, string => $config);
@@ -635,50 +642,80 @@ sub listDocumentPermissions($)
     (0, \%h, $trace);
 }
 
-=method describeUser $username
+=method describeAccount $username
 [non-API] returns a HASH with user information.
 =example
-  my ($rc, $info) = $db->describeUser($username);
+  my ($rc, $info) = $db->describeAccount($username);
   $rc==0 or die "error: $info ($rc)";
   my @groups = @{$info->{groups}};
 =cut
 
 #T
-sub describeUser($)
+sub describeAccount($)
 {   my ($self, $user) = @_;
-    my ($rc, $details, $trace) = $self->rpcClient->getUser(string => $user);
+
+    my $call = $self->serverVersion lt "3.0" ? 'getUser' : 'getAccount';
+    my ($rc, $details, $trace) = $self->rpcClient->$call(string => $user);
     $rc==0 or return ($rc, $details, $trace);
+
     my $h = struct_to_hash $details;
-    $h->{groups} = [ rpcarray_values $h->{groups} ];
+    $h->{groups}   = [ rpcarray_values $h->{groups} ];
+    $h->{metadata} = struct_to_hash $h->{metadata};
     (0, $h, $trace);
 }
 
-=method listUsers
+=method describeUser $username
+DEPRECATED: use M<describeAccount()>.
+=cut
+
+*describeUser = \&describeAccount;
+
+=method listAccounts
 [non-API] Returns a LIST with all defined usernames.
 =example
-  my ($rc, @users) = $db->listUsers;
+  my ($rc, @users) = $db->listAccounts;
   $rc==0 or die "error $users[0] ($rc)";
 =cut
 
 #T
-sub listUsers()
-{   my ($rc, $details, $trace) = shift->rpcClient->getUsers;
+sub listAccounts()
+{   my $self = shift;
+    my $call = $self->serverVersion lt "3.0" ? 'getUsers' : 'getAccounts';
+
+    my ($rc, $details, $trace) = $self->rpcClient->$call;
     $rc==0 or return ($rc, $details, $trace);
     my %h;
     foreach my $user (rpcarray_values $details)
     {   my $u = struct_to_hash $user;
-        $u->{groups} = [ rpcarray_values $u->{groups} ];
+        $u->{groups}   = [ rpcarray_values $u->{groups} ];
+        $u->{metadata} = struct_to_hash $u->{metadata};
         $h{$u->{name}} = $u;
     }
     (0, \%h, $trace);
 }
 
-=method removeUser $username
+=method listUsers
+DEPRECATED: use M<listAccounts()>.
+=cut
+
+*listUsers = \&listAccounts;
+
+
+=method removeAccount $username
 Returns true on success.
+
+=method removeUser $username
+DEPRECATED: Renamed to M<removeAccount()> in existDB v3.0.
+
 =cut
 
 #T
-sub removeUser($) { $_[0]->rpcClient->removeUser(string => $_[1]) }
+sub removeAccount($)
+{   my ($self, $username) = @_;
+    my $call = $self->serverVersion lt "3.0" ? 'removeUser' : 'removeAccount';
+    $_[0]->rpcClient->$call(string => $username);
+}
+*removeUser = \&removeAccount;
 
 =method setPermissions $target, $permissions, [$user, $group]
 The $target which is addressed is either a resource or a collection.
@@ -699,24 +736,31 @@ sub setPermissions($$;$$)
        , ($perms =~ m/\D/ ? 'string' : 'int') => $perms);
 }
 
-=method setUser $user, $password, $groups, [$home]
+=method addAccount $user, $password, $groups, [$home]
 Modifies or creates a repository user.
 The $password is plain-text password. $groups are specified as single
 scalar or and ARRAY. The first group is the user's primary group.
+
+=method setUser $user, $password, $groups, [$home]
+DEPRECATED: Renamed to M<addAccount()> in existDB v3.0.
 =cut
 
 #T
-sub setUser($$$;$)
+sub addAccount($$$;$)
 {   my ($self, $user, $password, $groups, $home) = @_;
     my @groups = ref $groups eq 'ARRAY' ? @$groups : $groups;
 
-    $self->rpcClient->setUser(string => $user
+    my $call = $self->serverVersion lt '3.0' ? 'setUser' : 'addAccount';
+
+    $self->rpcClient->$call(string => $user
       , string => md5_base64($password)
       , string => md5_hex("$user:exist:$password")
       , rpcarray_from(string => @groups)
       , ($home ? (string => $home) : ())
       );
 }
+*setUser = \&addAccount;
+
 
 =method describeCollectionPermissions [$collection]
 Returns the RC and a HASH which shows the permissions on the $collection.
@@ -927,7 +971,10 @@ sub downloadDocument($@)
 =cut
 
 sub listResourceTimestamps($)
-{   my ($rc, $stamps, $trace) = $_[0]->rpcClient->getTimestamps(string => $_[1]);
+{   my ($self, $resource) = @_;
+    my ($rc, $stamps, $trace)
+       = $self->rpcClient->getTimestamps(string => $resource);
+
     $rc==0 or return ($rc, $stamps, $trace);
 
     my @s = rpcarray_values $stamps;
@@ -1021,7 +1068,7 @@ sub uploadBinary($$$$;$$)
     
     $self->rpcClient->storeBinary
       ( base64 => (ref $bytes ? $$bytes : $bytes)
-      , string => $resource, string => $mime, boolean => $replace
+      , string => $resource, string => $mime, boolean => _bool $replace
       , _date_options($created, $modified)
       );
 }
@@ -1304,7 +1351,7 @@ sub scanIndexTerms($$$;$)
     if(@_==4)
     {   my ($coll, $begin, $end, $recurse) = @_;
         ($rc, $details, $trace) = $self->rpcClient->scanIndexTerms(string => $coll
-          , string => $begin, string => $end, boolean => $recurse);
+          , string => $begin, string => $end, boolean => _bool $recurse);
     }
     else
     {   my ($xpath, $begin, $end) = @_;
@@ -1326,7 +1373,8 @@ sub scanIndexTerms($$$;$)
 sub indexedElements($$)
 {   my ($self, $coll, $recurse) = @_;
     my ($rc, $details, $trace)
-      = $self->rpcClient->getIndexedElements(string => $coll, boolean => $recurse);
+      = $self->rpcClient->getIndexedElements(string => $coll
+         , boolean => _bool $recurse);
     $rc==0 or return ($rc, $details, $trace);
 
 ### cleanup Vector $details. Per element:
@@ -1508,7 +1556,7 @@ sub parseLocal($$$$;$$)
 {   my ($self, $fn, $resource, $replace, $mime, $created, $modified) = @_;
    
     $self->rpcClient->parseLocal
-      ( string => $fn, string => $resource, boolean => $replace
+      ( string => $fn, string => $resource, boolean => _bool $replace
       , string => $mime, _date_options($created, $modified)
       );
 }
@@ -1528,8 +1576,8 @@ sub parseLocalExt($$$$;$$)
 {   my ($self, $fn, $res, $replace, $mime, $is_xml, $created, $modified) = @_;
    
     $self->rpcClient->parseLocal
-      ( string => $fn, string => $res, boolean => $replace
-      , string => $mime, boolean => $is_xml
+      ( string => $fn, string => $res, boolean => _bool $replace
+      , string => $mime, boolean => _bool $is_xml
       , _date_options($created, $modified)
       );
 };
@@ -1726,8 +1774,10 @@ original names are still available:
   getPermissions            => describeResourcePermissions
   getResourceCount          => countResources
   getTimestamps             => listResourceTimestamps
-  getUser                   => describeUser
-  getUsers                  => listUsers
+  getUser     [<3.0]        => describeAccount
+  getAccount  [>3.0]        => describeAccount
+  getUsers    [<3.0]        => listAccounts
+  getAccounts [>3.0]        => listAccounts
   hasUserLock               => whoLockedResource
   isValid                   => isValidDocument
   listCollectionPermissions => describeCollectionPermissions
@@ -1751,8 +1801,9 @@ original names are still available:
 *getPermissions = \&describeResourcePermissions;
 *getResourceCount = \&countResources;
 *getTimestamps = \&listResourceTimestamps;
-*getUser   = \&describeUser;
-*getUsers  = \&listUsers;
+*getUser    = \&describeAccount;
+*getAccount = \&describeAccount;
+*getUsers   = \&listUsers;
 *hasUserLock = \&whoLockedResource;
 *isValid = \&isValidDocument;
 *listCollectionPermissions = \&describeCollectionPermissions;

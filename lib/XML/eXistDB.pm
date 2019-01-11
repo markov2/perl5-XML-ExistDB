@@ -1,9 +1,13 @@
-use warnings;
-use strict;
+# This code is part of distribution XML-ExistsDB.  Meta-POD processed with
+# OODoc into POD and HTML manual-pages.  See README.md
+# Copyright Mark Overmeer.  Licensed under the same terms as Perl itself.
 
 package XML::eXistDB;
 
-use Log::Report 'xml-existdb', syntax => 'SHORT';
+use warnings;
+use strict;
+
+use Log::Report 'xml-existdb';
 
 use XML::eXistDB::Util;
 use XML::Compile::Util  qw/pack_type type_of_node/;
@@ -48,6 +52,8 @@ the implementation to facilitate different XML databases back-ends.
 =default schemas <created internally>
 Overrule the location to load the schemas.
 
+=option  server_version STRING
+=default server_version $ENV{XML_SERVER_VERSION} || '3.0'
 =cut
 
 sub new(@) { my $class = shift; (bless {}, $class)->init({@_}) }
@@ -55,12 +61,15 @@ sub new(@) { my $class = shift; (bless {}, $class)->init({@_}) }
 sub init($)
 {   my ($self, $args) = @_;
 
-    my $schemas = $self->{schemas} ||= XML::Compile::Cache->new;
+    my $schemas = $self->{XE_schemas} ||= XML::Compile::Cache->new;
 
     $schemas->allowUndeclared(1);
     $schemas->anyElement('SLOPPY');   # query results are sloppy
     $schemas->addCompileOptions('RW', sloppy_integers => 1, sloppy_floats => 1);
     $schemas->addPrefixes(exist => NS_EXISTDB);
+
+    my $sv      = $args->{server_version} || $ENV{XML_SERVER_VERSION} || '3.0';
+    $self->{XE_version} = $sv;
 
     (my $xsddir = __FILE__) =~ s,\.pm,/xsd-exist,;
     my @xsds    = glob "$xsddir/*.xsd";
@@ -72,9 +81,11 @@ sub init($)
 #-----------------
 =section Attributes
 =method schemas
+=method serverVersion
 =cut
 
-sub schemas() {shift->{schemas}}
+sub schemas()       {shift->{XE_schemas}}
+sub serverVersion() {shift->{XE_version}}
 
 #-----------------
 =section Collection configuration (.xconf)
@@ -114,7 +125,6 @@ sub decodeXML($)
 
     my $type    = type_of_node $xml;
     my $known   = $schemas->namespaces->find(element => $type);
-warn "READER $type=", $schemas->reader($type);
     $known ? $schemas->reader($type)->($xml) : XMLin $xml;
 }
 

@@ -1,8 +1,12 @@
-use warnings;
-use strict;
+# This code is part of distribution XML-ExistsDB.  Meta-POD processed with
+# OODoc into POD and HTML manual-pages.  See README.md
+# Copyright Mark Overmeer.  Licensed under the same terms as Perl itself.
 
 package XML::eXistDB::Util;
 use base 'Exporter';
+
+use warnings;
+use strict;
 
 =chapter NAME
 XML::eXistDB::Util - Constants and other general functions

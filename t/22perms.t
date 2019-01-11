@@ -13,6 +13,7 @@ $Data::Dumper::Indent = 1;
 
 my $uri = $ENV{XML_EXIST_TESTDB}
     or plan skip_all => 'define XML_EXIST_TESTDB to run tests';
+my $admin_password = $ENV{XML_EXIST_ADMIN_PASSWORD};
 
 plan tests => 31;
 
@@ -40,36 +41,40 @@ cmp_ok($ok, 'eq', 1);
 
 ($rc, my $perms) = $db->describeResourcePermissions($doc1);
 cmp_ok($rc, '==', 0, "described perms $doc1");
-is_deeply($perms, { owner => 'guest', group => 'guest', permissions => 493 });
+#warn Dumper $perms;
+ok(delete $perms->{permissions});  # not consequent per ExistDB release
+is_deeply($perms, { owner => 'guest', group => 'guest', acl => {data => {}}});
 
 ($rc, $perms) = $db->listDocumentPermissions($collname);
 cmp_ok($rc, '==', 0, "described perms $collname");
-is_deeply($perms, { 'doc.xml' => [ guest => guest => 493 ] } );
+#warn Dumper $perms;
+ok(delete $perms->{'doc.xml'}[2]);
+is_deeply($perms, { 'doc.xml' => [ guest => 'guest', undef, {data => {}} ] } );
 
-($rc, my $user) = $db->describeUser('guest');
+($rc, my $user) = $db->describeAccount('guest');
 cmp_ok($rc, '==', 0, "described user guest");
-is_deeply($user, { groups => [ 'guest' ], name => 'guest' });
+#warn Dumper $user;
+ok($user->{groups});
 
-my %expusers =
- ( admin => { name => 'admin', groups => [ 'dba' ] }
- , guest => { name => 'guest', groups => [ 'guest' ] }
- );
-
-($rc, my $users) = $db->listUsers;
-cmp_ok($rc, '==', 0, 'list users');
-is_deeply($users, \%expusers);
+($rc, my $users) = $db->listAccounts;
+cmp_ok($rc, '==', 0, 'list accounts');
+#warn Dumper $users;
+ok(exists $users->{admin}, 'has admin');
+ok(exists $users->{guest}, 'has guest');
 
 ($rc, my $groups) = $db->listGroups;
 cmp_ok($rc, '==', 0, 'list groups');
-is_deeply( [sort @$groups], [ 'dba', 'guest' ] );
+#warn Dumper $groups;
+ok(grep $_ eq 'dba', @$groups);
+ok(grep $_ eq 'guest', @$groups);
 
 my $home = "$collname/markov";
-($rc, $ok) = $db->setUser('markov', 'testpw', 'guest', $home);
+($rc, $ok) = $db->addAccount('markov', 'testpw', 'guest', $home);
 cmp_ok($rc, '!=', 0, 'cannot add user: no perms');
 
-$db->login(admin => 'xyz');
+$db->login(admin => $admin_password);
 
-($rc, $ok) = $db->setUser('markov', 'testpw', 'guest', $home);
+($rc, $ok) = $db->addAccount('markov', 'testpw', 'guest', $home);
 cmp_ok($rc, '==', 0, 'now admin');
 cmp_ok($ok, 'eq', 1);
 
@@ -84,10 +89,9 @@ ok(0);
 
       }; # END TODO
 
-($rc, $users) = $db->listUsers;
+($rc, $users) = $db->listAccounts;
 cmp_ok($rc, '==', 0, 'list users');
-$expusers{markov} = { name => 'markov', groups => [ 'guest' ], home => $home };
-is_deeply($users, \%expusers);
+ok(exists $users->{markov}, 'has markov');
 
 $db->login(markov => 'testpw');
 ($rc, $users) = $db->listUsers;
@@ -95,7 +99,7 @@ cmp_ok($rc, '==', 0, 'can we do anything with this permissions?');
 
 $db->login(admin => 'xyz');
 
-($rc, $ok) = $db->removeUser('markov');
+($rc, $ok) = $db->removeAccount('markov');
 cmp_ok($rc, '==', 0, 'removed markov');
 cmp_ok($ok, 'eq', 1);
 
@@ -105,5 +109,5 @@ cmp_ok($ok, 'eq', 1);
 
 ($rc, my $c) = $db->describeCollection;
 cmp_ok($rc, '==', 0, 'really gone?');
-ok(!grep {$_ eq basename $collname} @{$c->{collections}});
+ok(!grep $_ eq basename $collname, @{$c->{collections}});
 
