@@ -3,8 +3,7 @@
   * My extended documentation: <http://perl.overmeer.net/CPAN/>
   * Development via GitHub: <https://github.com/markov2/perl5-XML-ExistDB>
   * Download from CPAN: <ftp://ftp.cpan.org/pub/CPAN/authors/id/M/MA/MARKOV/>
-  * Indexed from CPAN: <http://search.cpan.org/~markov/XML-ExistDB/>
-    and <https://metacpan.org/release/XML-ExistDB>
+  * Indexed from CPAN: <https://metacpan.org/release/XML-ExistDB>
 
 ## Development &rarr; Release
 

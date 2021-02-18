@@ -39,7 +39,7 @@ WriteMakefile
 sub MY::postamble { <<'__POSTAMBLE' }
 
 # for DIST
-EXTENDS		= ../XML-Compile:../XML-Compile-Cache:../../perl/XMLRPC
+EXTENDS		= ../XML-Compile:../XML-Compile-Cache:../XML-Compile-RPC
 RAWDIR		= ../public_html/xml-existdb/raw
 DISTDIR		= ../public_html/xml-existdb/source
 LICENSE		= perl
