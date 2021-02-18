@@ -3,6 +3,9 @@
 
 version 1.00:
 
+	Fixes:
+	- uploadDocument requires 'replace' boolean [Alberto Simões]
+
 **** NEEDS TESTING ****
 
 	Changes:

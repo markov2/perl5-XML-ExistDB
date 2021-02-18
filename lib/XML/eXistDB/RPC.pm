@@ -315,7 +315,7 @@ by OASIS is enabled on the database.
 =cut
 
 #T
-sub isXACMLEnabled() {shift->rpcClient->isXACMLEnabled}
+sub isXACMLEnabled() { shift->rpcClient->isXACMLEnabled }
 
 =method backup $user, $password, $tocoll, $fromcoll
 Returns success. Create a backup of the $fromcoll into the $tocoll, using
@@ -1027,7 +1027,7 @@ sub uploadDocument($$@)
     for ($chunks, $compr) { $_ *= 1024 if defined $_ } 
 
     my @dates   = _date_options $args{creation_date}, $args{modify_date};
-    my $replace = $args{replace};
+    my $replace = $args{replace}   || 0;
     my $mime    = $args{mime_type} || 'text/xml';
 
     # Send file in chunks
