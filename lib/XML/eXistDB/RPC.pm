@@ -117,7 +117,7 @@ such object.
 
 =option  destination URI
 =default destination <undef>
-Where the RPC server is (the ExistDB access point).  For instance
+Where the RPC server is (the eXistDB access point).  For instance
 C<http://localhost:8080/exist/xmlrpc>
 
 =option  rpc OBJECT
@@ -581,7 +581,7 @@ sub removeCollection($)
 =section Permissions
 
 =method login $username, [$password]
-[non-API] Change the $username (as known by ExistDB). When you specify
+[non-API] Change the $username (as known by eXistDB). When you specify
 a non-existing $username or a wrong $password, you will not get more data
 from this connection.  The next request will tell.
 =cut

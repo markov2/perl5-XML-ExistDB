@@ -3,7 +3,7 @@ use ExtUtils::MakeMaker;
 use 5.010;
 
 WriteMakefile
- ( NAME	 	=> 'XML::ExistDB'
+ ( NAME	 	=> 'XML::eXistDB'
  , VERSION	=> '1.00'
  , PREREQ_PM    =>
    { XML::Compile              => 1.50
@@ -18,7 +18,7 @@ WriteMakefile
 
  , EXE_FILES    => []
  , AUTHOR       => 'Mark Overmeer'
- , ABSTRACT     => 'ExistDB interface over XML-RPC'
+ , ABSTRACT     => 'eXistDB interface over XML-RPC'
  , LICENSE      => 'perl_5'
 
   , META_MERGE =>
@@ -26,8 +26,8 @@ WriteMakefile
       , resources  =>
           { repository =>
               { type => 'git'
-              , url  => 'https://github.com/markov2/perl5-XML-ExistDB.git'
-              , web  => 'https://github.com/markov2/perl5-XML-ExistDB'
+              , url  => 'https://github.com/markov2/perl5-XML-eXistDB.git'
+              , web  => 'https://github.com/markov2/perl5-XML-eXistDB'
               }
           , homepage => 'http://perl.overmeer.net/CPAN/'
           , license  => [ 'http://dev.perl.org/licenses/' ]

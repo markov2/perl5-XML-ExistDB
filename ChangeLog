@@ -5,6 +5,7 @@ version 1.00:
 
 	Fixes:
 	- uploadDocument requires 'replace' boolean [Alberto Simões]
+	- consequently use eXistDB (never ExistDB)
 
 **** NEEDS TESTING ****
 
