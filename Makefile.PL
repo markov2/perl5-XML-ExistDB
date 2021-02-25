@@ -4,7 +4,7 @@ use 5.010;
 
 WriteMakefile
  ( NAME	 	=> 'XML::eXistDB'
- , VERSION	=> '1.00'
+ , VERSION	=> '0.99_1'
  , PREREQ_PM    =>
    { XML::Compile              => 1.50
    , XML::Compile::Cache       => 1.04

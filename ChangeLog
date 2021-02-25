@@ -1,13 +1,11 @@
 
 ========= version history of XML::eXistDB
 
-version 1.00:
+version 0.99_1: Thu 25 Feb 13:43:52 CET 2021
 
 	Fixes:
 	- uploadDocument requires 'replace' boolean [Alberto Simões]
 	- consequently use eXistDB (never ExistDB)
-
-**** NEEDS TESTING ****
 
 	Changes:
 	- All functions now have the same return parameters:
